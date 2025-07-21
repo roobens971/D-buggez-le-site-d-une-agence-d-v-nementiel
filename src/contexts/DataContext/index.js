@@ -1,10 +1,12 @@
 import PropTypes from "prop-types";
+
 import {
   createContext,
   useCallback,
   useContext,
   useEffect,
   useState,
+  useMemo, 
 } from "react";
 
 const DataContext = createContext({});
@@ -19,30 +21,37 @@ export const api = {
 export const DataProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [data, setData] = useState(null);
+
   const getData = useCallback(async () => {
     try {
-      setData(await api.loadData());
+      const result = await api.loadData();
+      setData(result);
     } catch (err) {
       setError(err);
     }
   }, []);
+
   useEffect(() => {
     if (data) return;
     getData();
-  });
-  
+  }, [data, getData]); // ← attention, ajout de dépendances !
+
+  const last = data?.events?.[data.events.length - 1]; // ← ici on récupère le dernier élément
+
+    // ✅ useMemo pour éviter les re-créations inutiles de l'objet value
+  const contextValue = useMemo(() => ({
+    data,
+    error,
+    last,
+  }), [data, error, last]);
+
   return (
-    <DataContext.Provider
-      // eslint-disable-next-line react/jsx-no-constructed-context-values
-      value={{
-        data,
-        error,
-      }}
-    >
+    <DataContext.Provider value={contextValue}>
       {children}
     </DataContext.Provider>
   );
 };
+
 
 DataProvider.propTypes = {
   children: PropTypes.node.isRequired,
