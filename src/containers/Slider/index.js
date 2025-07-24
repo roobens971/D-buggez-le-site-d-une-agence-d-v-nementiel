@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useData } from "../../contexts/DataContext";
 import { getMonth } from "../../helpers/Date";
 
@@ -7,6 +7,7 @@ import "./style.scss";
 const Slider = () => {
   const { data } = useData();
   const [index, setIndex] = useState(0);
+  const sliderRef = useRef(null); // Ref pour cibler .SlideCardList
 
   // Trie les événements par date décroissante et ajoute un id s'il manque
   const byDateDesc = useMemo(
@@ -35,8 +36,16 @@ const Slider = () => {
     return undefined; // évite le warning ESLint "consistent-return"
   }, [index, byDateDesc, nextCard]);
 
+    //  Empêche le scroll horizontal avec overflow-x: hidden
+  useEffect(() => {
+    if (sliderRef.current) {
+      sliderRef.current.style.overflowY = "hidden";
+      sliderRef.current.style.overflowX = "hidden";
+    }
+  }, []);
+
   return (
-    <div className="SlideCardList">
+    <div className="SlideCardList" ref={sliderRef}>
       {byDateDesc.map((event, idx) => (
         <div
           key={event.id}
